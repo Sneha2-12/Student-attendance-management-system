@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Attendance Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-user-role="ROLE_STUDENT">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">S</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">Student Name</h4>
+                        <span th:text="${profile != null ? profile.rollNumber : 'CS202301'}">Roll Number</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1 th:text="'Hello, ' + ${user.name}">Hello, Student</h1>
+                    <p th:text="'Section: ' + ${profile != null ? profile.classSection : 'CS-A'} + ' | Tracking academic attendance'"></p>
+                </div>
+            </div>
+
+            <!-- Attendance Stats Progress Rings -->
+            <div class="metrics-grid">
+                <!-- Academic Attendance -->
+                <div class="metric-card" style="flex-direction: column; align-items: center; text-align: center; gap: 12px;">
+                    <div class="metric-info" style="text-align: center; width: 100%;">
+                        <h3>Academic Attendance</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Raw classes attended</p>
+                    </div>
+                    <div class="circular-progress" th:style="'background: conic-gradient(var(--primary) ' + ${attendance.academicPercentage} + '%, rgba(255, 255, 255, 0.05) 0%)'">
+                        <div class="progress-value" th:text="${attendance.academicPercentage} + '%'">75%</div>
+                    </div>
+                    <div class="progress-label">
+                        <p th:text="${attendance.present} + ' / ' + ${attendance.totalClasses} + ' Classes Present'"></p>
+                    </div>
+                </div>
+
+                <!-- Effective Attendance (including Medical/Duty leaves) -->
+                <div class="metric-card" style="flex-direction: column; align-items: center; text-align: center; gap: 12px;">
+                    <div class="metric-info" style="text-align: center; width: 100%;">
+                        <h3>Effective Attendance</h3>
+                        <p style="font-size: 12px; color: var(--success); margin-bottom: 8px;">Adjusted with ML & DL</p>
+                    </div>
+                    <div class="circular-progress" th:style="'background: conic-gradient(var(--success) ' + ${attendance.effectivePercentage} + '%, rgba(255, 255, 255, 0.05) 0%)'">
+                        <div class="progress-value" th:text="${attendance.effectivePercentage} + '%'" style="color: var(--success);">85%</div>
+                    </div>
+                    <div class="progress-label">
+                        <p th:text="'Leaves credited: ' + ${attendance.medicalLeave + attendance.dutyLeave}"></p>
+                    </div>
+                </div>
+
+                <!-- Leaves Stats Summary -->
+                <div class="metric-card" style="padding: 28px;">
+                    <div style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
+                        <h3>Leave Credits</h3>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;">
+                            <span style="color: var(--text-secondary);"><i class="fa-solid fa-suitcase-medical" style="margin-right: 8px; color: #60a5fa;"></i> Medical Leaves (ML)</span>
+                            <span th:text="${attendance.medicalLeave} + ' days'" style="font-weight: 600;">2 days</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-bottom: 5px;">
+                            <span style="color: var(--text-secondary);"><i class="fa-solid fa-award" style="margin-right: 8px; color: #fbbf24;"></i> Duty Leaves (DL)</span>
+                            <span th:text="${attendance.dutyLeave} + ' days'" style="font-weight: 600;">1 days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject-wise Attendance & Leave Applications -->
+            <div class="dashboard-sections">
+                <!-- Left Section: Subject Table -->
+                <div>
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Subject-wise Breakdown</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Subject Name</th>
+                                        <th>Code</th>
+                                        <th>Classes</th>
+                                        <th>Attended</th>
+                                        <th>Leaves (ML/DL)</th>
+                                        <th>Raw %</th>
+                                        <th>Adjusted %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="stats : ${attendance.subjectWiseStats}">
+                                        <td th:text="${stats.subjectName}" style="font-weight: 600;">Data Structures</td>
+                                        <td th:text="${stats.courseCode}" var="code">CS-101</td>
+                                        <td th:text="${stats.total}">12</td>
+                                        <td th:text="${stats.present}">9</td>
+                                        <td th:text="${stats.medicalLeave + stats.dutyLeave}">2</td>
+                                        <td>
+                                            <span th:text="${stats.academicPercentage} + '%'" 
+                                                  th:classappend="${stats.academicPercentage >= 75 ? 'badge badge-present' : 'badge badge-absent'}">75%</span>
+                                        </td>
+                                        <td>
+                                            <span th:text="${stats.effectivePercentage} + '%'" 
+                                                  th:classappend="${stats.effectivePercentage >= 75 ? 'badge badge-present' : 'badge badge-absent'}">91.6%</span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(attendance.subjectWiseStats)}">
+                                        <td colspan="7" style="text-align: center; color: var(--text-muted);">No attendance records found yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Leaves Request Table -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>My Leave Applications</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Duration</th>
+                                        <th>Reason</th>
+                                        <th>Attachment</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="req : ${leaves}">
+                                        <td>
+                                            <span th:text="${req.leaveType}" 
+                                                  th:class="${req.leaveType.name() == 'MEDICAL' ? 'badge badge-medical' : 'badge badge-duty'}">MEDICAL</span>
+                                        </td>
+                                        <td th:text="${req.startDate} + ' to ' + ${req.endDate}">2026-06-20 to 2026-06-22</td>
+                                        <td th:text="${req.reason}" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Fever</td>
+                                        <td>
+                                            <span th:if="${req.documentPath != null and req.documentPath != ''}" style="color: var(--primary); font-size: 12px;">
+                                                <i class="fa-solid fa-paperclip"></i> <span th:text="${req.documentPath}">doc.pdf</span>
+                                            </span>
+                                            <span th:unless="${req.documentPath != null and req.documentPath != ''}" style="color: var(--text-muted); font-size: 12px;">None</span>
+                                        </td>
+                                        <td>
+                                            <span th:text="${req.status}" 
+                                                  th:classappend="${req.status.name() == 'PENDING' ? 'badge badge-pending' : (req.status.name() == 'APPROVED' ? 'badge badge-approved' : 'badge badge-rejected')}">PENDING</span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(leaves)}">
+                                        <td colspan="5" style="text-align: center; color: var(--text-muted);">No leave requests submitted yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Section: Apply for Leave Form -->
+                <div>
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Apply for Leave</h2>
+                        </div>
+                        
+                        <div id="leaveAlert" class="alert" style="display: none;"></div>
+
+                        <form id="leaveForm">
+                            <div class="form-group">
+                                <label for="leaveType">Leave Type</label>
+                                <select id="leaveType" class="form-control">
+                                    <option value="MEDICAL">Medical Leave (ML)</option>
+                                    <option value="DUTY">Duty Leave (DL)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" id="startDate" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="endDate">End Date</label>
+                                <input type="date" id="endDate" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reason">Reason for Leave</label>
+                                <textarea id="reason" class="form-control" rows="4" placeholder="Brief explanation..." required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="documentPath">Document Link / Certificate Name</label>
+                                <input type="text" id="documentPath" class="form-control" placeholder="medical_certificate.pdf or event_invitation.pdf">
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Provide proof of certificate/event letter</p>
+                            </div>
+
+                            <button type="submit" class="btn" style="width: 100%;">
+                                Submit Request <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

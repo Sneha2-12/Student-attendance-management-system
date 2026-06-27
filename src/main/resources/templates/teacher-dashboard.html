@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Attendance Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-user-role="ROLE_TEACHER">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">T</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">Teacher Name</h4>
+                        <span th:text="${profile != null ? profile.department : 'Faculty'}">Department</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1 th:text="'Welcome, ' + ${user.name}">Welcome, Teacher</h1>
+                    <p th:text="'Faculty Department: ' + ${profile != null ? profile.department : 'Computer Science'}"></p>
+                </div>
+            </div>
+
+            <!-- Dashboard Sections -->
+            <div class="dashboard-sections">
+                <!-- Left Section: Mark Attendance spreadsheet -->
+                <div>
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Mark Student Attendance</h2>
+                        </div>
+
+                        <!-- Class & Subject Selectors -->
+                        <form id="attendanceForm">
+                            <div class="controls-row" style="margin-bottom: 24px; flex-wrap: wrap;">
+                                <div style="flex-grow: 1; min-width: 200px;">
+                                    <label for="subjectSelect" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Select Subject</label>
+                                    <select id="subjectSelect" class="form-control" style="max-width: 100%;" required>
+                                        <option value="" disabled selected>Choose Subject...</option>
+                                        <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name} + ' (' + ${sub.courseCode} + ')'">Subject Name</option>
+                                    </select>
+                                </div>
+                                <div style="flex-grow: 1; min-width: 150px;">
+                                    <label for="classFilter" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Class Section</label>
+                                    <select id="classFilter" class="form-control" style="max-width: 100%;">
+                                        <option value="">All Sections</option>
+                                        <option value="CS-A">CS-A</option>
+                                        <option value="CS-B">CS-B</option>
+                                    </select>
+                                </div>
+                                <div style="flex-grow: 1; min-width: 150px;">
+                                    <label for="attendanceDate" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Date</label>
+                                    <input type="date" id="attendanceDate" class="form-control" style="max-width: 100%;" th:value="${#calendars.format(#calendars.createNow(), 'yyyy-MM-dd')}" required>
+                                </div>
+                            </div>
+
+                            <!-- Enroll Student Panel (Only visible when subject is selected) -->
+                            <div id="enrollStudentPanel" style="display: none; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; align-items: flex-end; gap: 16px; flex-wrap: wrap;">
+                                <div style="flex-grow: 1; min-width: 200px;">
+                                    <label for="enrollStudentSelect" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Enroll New Student in this Subject</label>
+                                    <select id="enrollStudentSelect" class="form-control" style="max-width: 100%;">
+                                        <option value="" disabled selected>Select Student...</option>
+                                        <option th:each="student : ${students}" th:value="${student.user.id}" th:text="${student.user.name} + ' (' + ${student.rollNumber} + ' - ' + ${student.classSection} + ')'">Student Name</option>
+                                    </select>
+                                </div>
+                                <button type="button" id="btnEnrollStudent" class="btn" style="width: auto; height: 45px; padding: 0 20px;">
+                                    Enroll <i class="fa-solid fa-user-plus" style="margin-left: 8px;"></i>
+                                </button>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Roll Number</th>
+                                            <th>Student Name</th>
+                                            <th>Class</th>
+                                            <th style="text-align: center;">Mark Status & Leave Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attendanceTableBody">
+                                        <!-- Students will be loaded dynamically when subject is selected -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <button type="submit" class="btn" style="margin-top: 24px; max-width: 240px; float: right;">
+                                Submit Attendance <i class="fa-solid fa-check" style="margin-left: 8px;"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Section: Leave Approvals -->
+                <div>
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Leave Approvals</h2>
+                        </div>
+
+                        <div class="table-responsive">
+                            <div th:each="req : ${pendingLeaves}" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span class="badge" th:text="${req.leaveType}" th:classappend="${req.leaveType.name() == 'MEDICAL' ? 'badge-medical' : 'badge-duty'}">MEDICAL</span>
+                                    <span style="font-size: 12px; color: var(--text-secondary);" th:text="${req.startDate} + ' to ' + ${req.endDate}">Duration</span>
+                                </div>
+                                <h4 th:text="${req.student.name}" style="font-size: 15px; margin-bottom: 4px;">Student Name</h4>
+                                <p th:text="'Reason: ' + ${req.reason}" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;"></p>
+                                
+                                <div th:if="${req.documentPath != null and req.documentPath != ''}" style="margin-bottom: 12px; font-size: 12px;">
+                                    <span style="color: var(--primary);">
+                                        <i class="fa-solid fa-paperclip" style="margin-right: 6px;"></i> Proof: <span th:text="${req.documentPath}">doc.pdf</span>
+                                    </span>
+                                </div>
+
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'APPROVED\')'" class="btn btn-sm" style="background: var(--success); padding: 8px 12px; font-size: 13px;">
+                                        Approve
+                                    </button>
+                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'REJECTED\')'" class="btn btn-secondary btn-sm" style="border-color: rgba(239, 68, 68, 0.2); color: #f87171; padding: 8px 12px; font-size: 13px;">
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div th:if="${#lists.isEmpty(pendingLeaves)}" style="text-align: center; padding: 20px 0; color: var(--text-muted);">
+                                <i class="fa-regular fa-folder-open" style="font-size: 28px; margin-bottom: 10px; display: block;"></i>
+                                No pending leave requests.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        let allStudents = [];
+        
+        // Load students when subject is selected
+        document.getElementById('subjectSelect').addEventListener('change', async function() {
+            const subjectId = this.value;
+            if (!subjectId) {
+                document.getElementById('attendanceTableBody').innerHTML = '';
+                document.getElementById('enrollStudentPanel').style.display = 'none';
+                return;
+            }
+
+            // Show enroll panel
+            document.getElementById('enrollStudentPanel').style.display = 'flex';
+
+            try {
+                const response = await fetch(`/api/attendance/subject/${subjectId}/students`);
+                if (!response.ok) throw new Error('Failed to fetch students');
+                
+                allStudents = await response.json();
+                updateAttendanceTable();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load students for this subject');
+            }
+        });
+
+        // Enroll student action
+        document.getElementById('btnEnrollStudent').addEventListener('click', async function() {
+            const subjectId = document.getElementById('subjectSelect').value;
+            const studentId = document.getElementById('enrollStudentSelect').value;
+            
+            if (!subjectId || !studentId) {
+                alert('Please select a student to enroll');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/attendance/subject/${subjectId}/enroll/${studentId}`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    const errMsg = await response.text();
+                    throw new Error(errMsg || 'Failed to enroll student');
+                }
+                
+                alert('Student enrolled successfully');
+                
+                // Reload student list
+                const studentsResponse = await fetch(`/api/attendance/subject/${subjectId}/students`);
+                if (studentsResponse.ok) {
+                    allStudents = await studentsResponse.json();
+                    updateAttendanceTable();
+                }
+                
+                // Reset select
+                document.getElementById('enrollStudentSelect').value = '';
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to enroll student');
+            }
+        });
+
+        // Filter students by class section when filter changes
+        document.getElementById('classFilter').addEventListener('change', updateAttendanceTable);
+
+        function updateAttendanceTable() {
+            const classFilter = document.getElementById('classFilter').value;
+            const filteredStudents = classFilter ? 
+                allStudents.filter(s => s.classSection === classFilter) : 
+                allStudents;
+
+            const tableBody = document.getElementById('attendanceTableBody');
+            
+            if (filteredStudents.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No students enrolled in this subject.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = filteredStudents.map(student => `
+                <tr data-student-id="${student.studentId}" data-class-section="${student.classSection}">
+                    <td style="font-weight: 600;">${student.rollNumber}</td>
+                    <td>${student.studentName}</td>
+                    <td><span class="badge" style="background: rgba(255,255,255,0.05);">${student.classSection}</span></td>
+                    <td>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <div style="display: flex; justify-content: center; gap: 12px; flex: 1;">
+                                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="radio" name="status_${student.studentId}" value="PRESENT" checked style="accent-color: var(--success);">
+                                    <span style="font-size: 14px; font-weight: 600; color: #34d399;">Present</span>
+                                </label>
+                                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="radio" name="status_${student.studentId}" value="ABSENT" style="accent-color: var(--danger);">
+                                    <span style="font-size: 14px; font-weight: 600; color: #f87171;">Absent</span>
+                                </label>
+                            </div>
+                            ${student.activeLeaveType ? `<span class="badge" style="background: ${student.activeLeaveType === 'MEDICAL_LEAVE' ? 'rgba(59,130,246,0.2); color: #3b82f6;' : 'rgba(168,85,247,0.2); color: #a855f7;'}; font-size: 11px; padding: 4px 8px; border-radius: 4px; white-space: nowrap;">${student.activeLeaveType.replace('_', ' ')}</span>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Form submission
+        document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const subjectId = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            
+            if (!subjectId || !date) {
+                alert('Please select subject and date');
+                return;
+            }
+
+            const studentStatuses = {};
+            document.querySelectorAll('#attendanceTableBody tr').forEach(row => {
+                const studentId = row.getAttribute('data-student-id');
+                const status = row.querySelector(`input[name="status_${studentId}"]:checked`).value;
+                studentStatuses[studentId] = status;
+            });
+
+            try {
+                const response = await fetch('/api/attendance/mark', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subjectId: parseInt(subjectId),
+                        date: date,
+                        studentStatuses: studentStatuses
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Attendance marked successfully for ' + data.recordsCount + ' students');
+                    document.getElementById('attendanceForm').reset();
+                    document.getElementById('attendanceTableBody').innerHTML = '';
+                } else {
+                    alert('Error: ' + data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit attendance');
+            }
+        });
+    </script>
+</body>
+</html>

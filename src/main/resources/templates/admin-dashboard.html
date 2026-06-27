@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Attendance Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-user-role="ROLE_ADMIN">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar">A</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">Admin Name</h4>
+                        <span>Administrator</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Administrator Control Panel</h1>
+                    <p>Manage faculty, students, curriculum, and approvals</p>
+                </div>
+            </div>
+
+            <!-- Metrics grid -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h3>Total Students</h3>
+                        <p th:text="${totalStudents}">0</p>
+                    </div>
+                    <div class="metric-icon blue">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h3>Total Teachers</h3>
+                        <p th:text="${totalTeachers}">0</p>
+                    </div>
+                    <div class="metric-icon green">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h3>Pending Leaves</h3>
+                        <p th:text="${pendingLeavesCount}" style="color: var(--warning);">0</p>
+                    </div>
+                    <div class="metric-icon yellow">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h3>Scheduled Exams</h3>
+                        <p th:text="${upcomingExamsCount}">0</p>
+                    </div>
+                    <div class="metric-icon red">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Sections -->
+            <div class="dashboard-sections">
+                <!-- Left Section: Student & Teacher Management -->
+                <div>
+                    <!-- Student Profiles -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Registered Students</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Roll Number</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Class Section</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="student : ${students}">
+                                        <td th:text="${student.rollNumber}" style="font-weight: 600;">RollNo</td>
+                                        <td th:text="${student.user.name}">John Doe</td>
+                                        <td th:text="${student.user.email}">john@school.com</td>
+                                        <td><span class="badge" th:text="${student.classSection}" style="background: rgba(255,255,255,0.05);">CS-A</span></td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(students)}">
+                                        <td colspan="4" style="text-align: center; color: var(--text-muted);">No students registered.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Teacher Profiles -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Faculty Members</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="teacher : ${teachers}">
+                                        <td th:text="${teacher.name}" style="font-weight: 600;">Dr. Sarah Connor</td>
+                                        <td th:text="${teacher.email}">sarah@school.com</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(teachers)}">
+                                        <td colspan="2" style="text-align: center; color: var(--text-muted);">No teachers registered.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Section: Leave approvals and Subjects -->
+                <div>
+                    <!-- Pending Leaves -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Pending Leave Requests</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <div th:each="req : ${pendingLeaves}" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span class="badge" th:text="${req.leaveType}" th:classappend="${req.leaveType.name() == 'MEDICAL' ? 'badge-medical' : 'badge-duty'}">MEDICAL</span>
+                                    <span style="font-size: 11px; color: var(--text-secondary);" th:text="${req.startDate} + ' to ' + ${req.endDate}">Date</span>
+                                </div>
+                                <h4 th:text="${req.student.name}" style="font-size: 14px; margin-bottom: 4px;">Student Name</h4>
+                                <p th:text="${req.reason}" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;"></p>
+                                
+                                <div th:if="${req.documentPath != null and req.documentPath != ''}" style="margin-bottom: 12px; font-size: 12px;">
+                                    <span style="color: var(--primary);">
+                                        <i class="fa-solid fa-paperclip" style="margin-right: 6px;"></i> Attachment: <span th:text="${req.documentPath}">doc.pdf</span>
+                                    </span>
+                                </div>
+
+                                <div style="display: flex; gap: 8px;">
+                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'APPROVED\')'" class="btn btn-sm" style="background: var(--success); padding: 6px 10px; font-size: 12px;">
+                                        Approve
+                                    </button>
+                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'REJECTED\')'" class="btn btn-secondary btn-sm" style="border-color: rgba(239, 68, 68, 0.2); color: #f87171; padding: 6px 10px; font-size: 12px;">
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div th:if="${#lists.isEmpty(pendingLeaves)}" style="text-align: center; color: var(--text-muted); padding: 10px 0;">
+                                No pending leave requests.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subjects list -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h2>Curriculum Subjects</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <div th:each="sub : ${subjects}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-glass);">
+                                <div>
+                                    <h4 th:text="${sub.name}" style="font-size: 14px; font-weight: 600;">Data Structures</h4>
+                                    <span th:text="'Instructor: ' + ${sub.teacher.name}" style="font-size: 12px; color: var(--text-secondary);">Teacher Name</span>
+                                </div>
+                                <span class="badge" th:text="${sub.courseCode}" style="background: var(--primary-glow); color: var(--primary);">CS-101</span>
+                            </div>
+                            <div th:if="${#lists.isEmpty(subjects)}" style="text-align: center; color: var(--text-muted); padding: 10px 0;">
+                                No subjects created yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

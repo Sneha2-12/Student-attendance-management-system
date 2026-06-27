@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upcoming Exams Calendar - Attendance Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Calendar Specific Styling */
+        .calendar-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        .calendar-month-year {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .calendar-nav-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calendar-nav-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .calendar-weekdays-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #475569;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .calendar-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        .calendar-day-cell {
+            min-height: 110px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .calendar-day-cell:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .calendar-day-empty {
+            min-height: 110px;
+            background: transparent;
+        }
+
+        .day-number {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            align-self: flex-start;
+        }
+
+        .calendar-day-cell.today .day-number {
+            color: #ffffff;
+            font-weight: 700;
+            background: var(--primary);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-day-cell.has-exam {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .calendar-day-cell.has-exam:hover {
+            background: #fee2e2;
+        }
+
+        .exam-badges-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+            overflow-y: auto;
+            max-height: 70px;
+        }
+
+        .calendar-exam-badge {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #b91c1c;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 6px;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: var(--transition);
+            text-transform: uppercase;
+        }
+
+        .calendar-exam-badge:hover {
+            background: #b91c1c;
+            color: white;
+            border-color: #b91c1c;
+        }
+
+        /* Detail Panel Slideout */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            z-index: 1000;
+            transition: right 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .side-panel.active {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .side-panel-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .close-panel-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .exam-detail-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+
+        .exam-detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .exam-detail-item h3 {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .exam-detail-item p {
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .calendar-weekdays-grid {
+                font-size: 11px;
+                gap: 4px;
+            }
+            .calendar-days-grid {
+                gap: 4px;
+            }
+            .calendar-day-cell {
+                min-height: 80px;
+                padding: 4px;
+            }
+            .exam-badges-container {
+                max-height: 50px;
+            }
+            .calendar-exam-badge {
+                font-size: 8px;
+                padding: 2px 4px;
+            }
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body th:data-user-role="${role}">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">User Name</h4>
+                        <span th:text="${user.role.name().substring(5)}">Role</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Upcoming Examinations</h1>
+                    <p th:if="${role == 'ROLE_ADMIN' or role == 'ROLE_TEACHER'}">Click on any date to schedule a new exam</p>
+                    <p th:unless="${role == 'ROLE_ADMIN' or role == 'ROLE_TEACHER'}">View and track upcoming test schedules</p>
+                </div>
+            </div>
+
+            <!-- Calendar Wrapper -->
+            <div class="calendar-card">
+                <div class="calendar-header">
+                    <button id="prevMonthBtn" class="calendar-nav-btn">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <h2 id="calendarMonthYear" class="calendar-month-year">June 2026</h2>
+                    <button id="nextMonthBtn" class="calendar-nav-btn">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Weekdays Header -->
+                <div class="calendar-weekdays-grid">
+                    <div>SUN</div>
+                    <div>MON</div>
+                    <div>TUE</div>
+                    <div>WED</div>
+                    <div>THU</div>
+                    <div>FRI</div>
+                    <div>SAT</div>
+                </div>
+
+                <!-- Days Grid -->
+                <div id="calendarDays" class="calendar-days-grid">
+                    <!-- Javascript will inject cells here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Details Drawer Panel -->
+    <div id="examDetailsPanel" class="side-panel">
+        <div class="side-panel-header">
+            <h2>Exam Details</h2>
+            <button onclick="closeExamDetails()" class="close-panel-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="examDetailsContent" style="flex-grow: 1;">
+            <!-- Javascript will inject info here -->
+        </div>
+    </div>
+
+    <!-- Add Exam Modal (Only for Teachers/Admins) -->
+    <div id="addExamModal" class="modal-overlay" th:if="${role == 'ROLE_ADMIN' or role == 'ROLE_TEACHER'}">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 18px; font-weight: 600;">Schedule New Exam</h2>
+                <button onclick="closeAddExamModal()" class="close-panel-btn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="addExamForm">
+                <div class="form-group">
+                    <label for="examSubjectSelect">Subject</label>
+                    <select id="examSubjectSelect" class="form-control" required>
+                        <option value="" disabled selected>Choose Subject...</option>
+                        <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name} + ' (' + ${sub.courseCode} + ')'">DSA</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="examDateInput">Date</label>
+                    <input type="date" id="examDateInput" class="form-control" required readonly>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="examStartTime">Start Time</label>
+                        <input type="time" id="examStartTime" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="examEndTime">End Time</label>
+                        <input type="time" id="examEndTime" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="examRoom">Venue / Room</label>
+                    <input type="text" id="examRoom" class="form-control" placeholder="Block A - Room 101" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="examMarks">Total Marks</label>
+                    <input type="number" id="examMarks" class="form-control" placeholder="100" min="1" required>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddExamModal()" class="btn btn-secondary" style="width: auto;">Cancel</button>
+                    <button type="submit" class="btn" style="width: auto;">Schedule Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+    <script th:src="@{/js/calendar.js}"></script>
+</body>
+</html>
