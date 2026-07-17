@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Gradebook - Faculty Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body th:data-user-role="${role}">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/students">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Class Roster</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/timetable">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Class Timetable</span>
+                    </a>
+                </li>
+                <li class="nav-item active" th:if="${role != 'ROLE_STUDENT'}">
+                    <a href="/gradebook">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Gradebook</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">User Name</h4>
+                        <span th:text="${role.substring(5)}">Role</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Academic Gradebook</h1>
+                    <p>Enter and update student performance marks per subject and assessment</p>
+                </div>
+            </div>
+
+            <!-- Subject & Section Selectors -->
+            <div class="section-card" style="margin-bottom: 24px;">
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div style="flex-grow: 1; min-width: 200px;">
+                        <label for="gradeSubjectSelect" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Select Subject</label>
+                        <select id="gradeSubjectSelect" class="form-control">
+                            <option value="" disabled selected>Choose Subject...</option>
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name} + ' (' + ${sub.courseCode} + ')'">DSA</option>
+                        </select>
+                    </div>
+                    <div style="flex-grow: 1; min-width: 150px;">
+                        <label for="gradeSectionFilter" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Class Section / Group</label>
+                        <select id="gradeSectionFilter" class="form-control">
+                            <option value="CS-A">Section CS-A</option>
+                            <option value="CS-B">Section CS-B</option>
+                        </select>
+                    </div>
+                    <div style="flex-grow: 1; min-width: 150px;">
+                        <label for="gradeExamType" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Assessment Type</label>
+                        <select id="gradeExamType" class="form-control">
+                            <option value="Midterm Exam">Midterm Exam</option>
+                            <option value="Endterm Exam">Endterm Exam</option>
+                            <option value="Assignment">Assignment</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grade Entries Table -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Grade Entry Worksheet</h2>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 150px;">Roll Number</th>
+                                <th style="width: 200px;">Student Name</th>
+                                <th style="width: 150px;">Marks Obtained</th>
+                                <th style="width: 120px;">Max Marks</th>
+                                <th>Teacher Comments / Remarks</th>
+                                <th style="text-align: center; width: 120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradeRosterBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px 0;">
+                                    Please select a subject to load the student grade sheet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Store full roster in JavaScript to filter easily -->
+    <script th:inline="javascript">
+        const allStudents = [[${students}]];
+    </script>
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        document.getElementById('gradeSubjectSelect').addEventListener('change', loadGradeSheet);
+        document.getElementById('gradeSectionFilter').addEventListener('change', loadGradeSheet);
+        document.getElementById('gradeExamType').addEventListener('change', loadGradeSheet);
+
+        function loadGradeSheet() {
+            const subjectId = document.getElementById('gradeSubjectSelect').value;
+            const section = document.getElementById('gradeSectionFilter').value;
+            
+            if (!subjectId || !section) return;
+
+            const tbody = document.getElementById('gradeRosterBody');
+            
+            // Filter students by section
+            const sectionStudents = allStudents.filter(s => s.classSection === section);
+
+            if (sectionStudents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No students enrolled in this section.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sectionStudents.map(student => `
+                <tr>
+                    <td style="font-weight: 600; color: #1e3a8a;">${student.rollNumber}</td>
+                    <td>${student.user.name}</td>
+                    <td>
+                        <input type="number" id="marks-${student.user.id}" class="form-control" placeholder="Marks" min="0" max="100" style="padding: 6px 12px; height: 36px; border-radius: 4px;" required>
+                    </td>
+                    <td>
+                        <input type="number" id="max-${student.user.id}" class="form-control" value="100" style="padding: 6px 12px; height: 36px; border-radius: 4px;" readonly>
+                    </td>
+                    <td>
+                        <input type="text" id="remarks-${student.user.id}" class="form-control" placeholder="Optional comments..." style="padding: 6px 12px; height: 36px; border-radius: 4px;">
+                    </td>
+                    <td style="text-align: center;">
+                        <button onclick="saveStudentGrade(${student.user.id})" class="btn btn-sm" style="width: auto; height: 36px; padding: 0 16px; font-size: 13px;">
+                            Save <i class="fa-solid fa-floppy-disk" style="margin-left: 6px;"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function saveStudentGrade(studentUserId) {
+            const subjectId = document.getElementById('gradeSubjectSelect').value;
+            const examType = document.getElementById('gradeExamType').value;
+            const marksObtained = document.getElementById(`marks-${studentUserId}`).value;
+            const maxMarks = document.getElementById(`max-${studentUserId}`).value;
+            const remarks = document.getElementById(`remarks-${studentUserId}`).value;
+
+            if (!marksObtained) {
+                alert('Please enter a marks value first');
+                return;
+            }
+
+            const payload = {
+                studentId: studentUserId,
+                subjectId: subjectId,
+                marksObtained: parseInt(marksObtained),
+                maxMarks: parseInt(maxMarks),
+                examType: examType,
+                remarks: remarks
+            };
+
+            try {
+                const token = localStorage.getItem('jwt_token') || getCookie('jwt_token');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = 'Bearer ' + token;
+                }
+
+                const response = await fetch('/api/grades', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('Grade saved successfully!');
+                } else {
+                    const err = await response.json();
+                    alert('Failed to save grade: ' + (err.message || 'Error occurred'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error');
+            }
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+    </script>
+</body>
+</html>

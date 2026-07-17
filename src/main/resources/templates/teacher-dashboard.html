@@ -7,6 +7,59 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Drawer sliding styles */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -360px; /* Initially hidden on the right */
+            width: 360px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -10px 0 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .side-panel.open {
+            right: 0;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+        }
+        .close-panel-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .close-panel-btn:hover {
+            color: #0f172a;
+        }
+    </style>
 </head>
 <body data-user-role="ROLE_TEACHER">
     <div class="dashboard-container">
@@ -37,6 +90,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="/gradebook">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Gradebook</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="/calendar">
                         <i class="fa-solid fa-calendar-days"></i>
                         <span>Exam Calendar</span>
@@ -60,10 +119,20 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <div class="top-bar">
+            <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center;">
                 <div class="page-title">
                     <h1 th:text="'Welcome, ' + ${user.name}">Welcome, Teacher</h1>
                     <p th:text="'Faculty Department: ' + ${profile != null ? profile.department : 'Computer Science'}"></p>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <!-- Bell Icon -->
+                    <button onclick="toggleNotificationDrawer()" class="btn btn-secondary" style="width: 45px; height: 45px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; position: relative; border-color: #cbd5e1;">
+                        <i class="fa-solid fa-bell" style="font-size: 18px; margin: 0; color: #475569;"></i>
+                        <span style="position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                    </button>
+                    <button onclick="openAddStudentModal()" class="btn" style="width: auto; height: 45px; padding: 0 20px;">
+                        Add Student <i class="fa-solid fa-user-plus" style="margin-left: 8px;"></i>
+                    </button>
                 </div>
             </div>
 
@@ -100,7 +169,7 @@
                                 </div>
                             </div>
 
-                            <!-- Enroll Student Panel (Only visible when subject is selected) -->
+                            <!-- Enroll Student Panel -->
                             <div id="enrollStudentPanel" style="display: none; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; align-items: flex-end; gap: 16px; flex-wrap: wrap;">
                                 <div style="flex-grow: 1; min-width: 200px;">
                                     <label for="enrollStudentSelect" style="display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-secondary);">Enroll New Student in this Subject</label>
@@ -180,11 +249,147 @@
         </div>
     </div>
 
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 18px; font-weight: 600;">Add New Student</h2>
+                <button onclick="closeAddStudentModal()" class="close-panel-btn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label for="studentName">Full Name</label>
+                    <input type="text" id="studentName" class="form-control" placeholder="e.g. John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="studentEmail">Email Address</label>
+                    <input type="email" id="studentEmail" class="form-control" placeholder="e.g. john@school.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentPassword">Password</label>
+                    <input type="password" id="studentPassword" class="form-control" placeholder="Password (minimum 6 chars)" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentRoll">Roll Number</label>
+                        <input type="text" id="studentRoll" class="form-control" placeholder="e.g. CS202601" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentSection">Class Section</label>
+                        <select id="studentSection" class="form-control" required>
+                            <option value="CS-A">CS-A</option>
+                            <option value="CS-B">CS-B</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddStudentModal()" class="btn btn-secondary" style="width: auto;">Cancel</button>
+                    <button type="submit" class="btn" style="width: auto;">Register Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sideways Notifications Drawer -->
+    <div id="notificationDrawer" class="side-panel">
+        <div class="side-panel-header">
+            <h2>Notifications & Events</h2>
+            <button onclick="toggleNotificationDrawer()" class="close-panel-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex-grow: 1;">
+            <!-- Upcoming Exams List -->
+            <div style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: var(--radius-md); padding: 16px;">
+                <h4 style="color: #1d4ed8; font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-calendar-check"></i> Upcoming Examinations
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                        <strong>DSA Midterm Exam</strong>
+                        <div style="color: #4b5563; font-size: 11px; margin-top: 4px;">CS-101 | Venue: Room 301</div>
+                    </div>
+                    <div style="font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                        <strong>DBMS Midterm Exam</strong>
+                        <div style="color: #4b5563; font-size: 11px; margin-top: 4px;">CS-103 | Venue: Room 302</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-md); padding: 16px;">
+                <h4 style="color: #d97706; font-size: 14px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-info"></i> Academic Notices
+                </h4>
+                <p style="color: #78350f; font-size: 12px; line-height: 1.4;">Class cancellations and substitutions will be displayed instantly inside student and faculty schedules.</p>
+            </div>
+        </div>
+    </div>
+
     <script th:src="@{/js/main.js}"></script>
     <script>
-        let allStudents = [];
+        let allStudentsList = [];
+
+        function openAddStudentModal() {
+            document.getElementById('addStudentModal').style.display = "flex";
+        }
         
-        // Load students when subject is selected
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').style.display = "none";
+        }
+
+        function toggleNotificationDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            drawer.classList.toggle('open');
+        }
+
+        // Add Student form submit
+        document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('studentName').value;
+            const email = document.getElementById('studentEmail').value;
+            const password = document.getElementById('studentPassword').value;
+            const rollNumber = document.getElementById('studentRoll').value;
+            const classSection = document.getElementById('studentSection').value;
+
+            const payload = {
+                name,
+                email,
+                password,
+                role: 'ROLE_STUDENT',
+                rollNumber,
+                classSection
+            };
+
+            try {
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('Student added successfully!');
+                    location.reload();
+                } else {
+                    const err = await response.json();
+                    alert('Registration failed: ' + (err.message || 'Error occurred'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error');
+            }
+        });
+
+        // Attendance Form Loader
         document.getElementById('subjectSelect').addEventListener('change', async function() {
             const subjectId = this.value;
             if (!subjectId) {
@@ -193,141 +398,131 @@
                 return;
             }
 
-            // Show enroll panel
             document.getElementById('enrollStudentPanel').style.display = 'flex';
 
             try {
                 const response = await fetch(`/api/attendance/subject/${subjectId}/students`);
                 if (!response.ok) throw new Error('Failed to fetch students');
                 
-                allStudents = await response.json();
+                allStudentsList = await response.json();
                 updateAttendanceTable();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to load students for this subject');
+                alert('Failed to load students');
             }
         });
 
-        // Enroll student action
-        document.getElementById('btnEnrollStudent').addEventListener('click', async function() {
-            const subjectId = document.getElementById('subjectSelect').value;
-            const studentId = document.getElementById('enrollStudentSelect').value;
-            
-            if (!subjectId || !studentId) {
-                alert('Please select a student to enroll');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/attendance/subject/${subjectId}/enroll/${studentId}`, {
-                    method: 'POST'
-                });
-                
-                if (!response.ok) {
-                    const errMsg = await response.text();
-                    throw new Error(errMsg || 'Failed to enroll student');
-                }
-                
-                alert('Student enrolled successfully');
-                
-                // Reload student list
-                const studentsResponse = await fetch(`/api/attendance/subject/${subjectId}/students`);
-                if (studentsResponse.ok) {
-                    allStudents = await studentsResponse.json();
-                    updateAttendanceTable();
-                }
-                
-                // Reset select
-                document.getElementById('enrollStudentSelect').value = '';
-            } catch (error) {
-                console.error('Error:', error);
-                alert(error.message || 'Failed to enroll student');
-            }
-        });
-
-        // Filter students by class section when filter changes
+        // Filter students by section
         document.getElementById('classFilter').addEventListener('change', updateAttendanceTable);
 
         function updateAttendanceTable() {
             const classFilter = document.getElementById('classFilter').value;
-            const filteredStudents = classFilter ? 
-                allStudents.filter(s => s.classSection === classFilter) : 
-                allStudents;
+            const filtered = classFilter ? allStudentsList.filter(s => s.classSection === classFilter) : allStudentsList;
+            const tbody = document.getElementById('attendanceTableBody');
 
-            const tableBody = document.getElementById('attendanceTableBody');
-            
-            if (filteredStudents.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No students enrolled in this subject.</td></tr>';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No students enrolled.</td></tr>';
                 return;
             }
 
-            tableBody.innerHTML = filteredStudents.map(student => `
-                <tr data-student-id="${student.studentId}" data-class-section="${student.classSection}">
-                    <td style="font-weight: 600;">${student.rollNumber}</td>
-                    <td>${student.studentName}</td>
-                    <td><span class="badge" style="background: rgba(255,255,255,0.05);">${student.classSection}</span></td>
-                    <td>
-                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                            <div style="display: flex; justify-content: center; gap: 12px; flex: 1;">
-                                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="radio" name="status_${student.studentId}" value="PRESENT" checked style="accent-color: var(--success);">
-                                    <span style="font-size: 14px; font-weight: 600; color: #34d399;">Present</span>
-                                </label>
-                                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="radio" name="status_${student.studentId}" value="ABSENT" style="accent-color: var(--danger);">
-                                    <span style="font-size: 14px; font-weight: 600; color: #f87171;">Absent</span>
-                                </label>
-                            </div>
-                            ${student.activeLeaveType ? `<span class="badge" style="background: ${student.activeLeaveType === 'MEDICAL_LEAVE' ? 'rgba(59,130,246,0.2); color: #3b82f6;' : 'rgba(168,85,247,0.2); color: #a855f7;'}; font-size: 11px; padding: 4px 8px; border-radius: 4px; white-space: nowrap;">${student.activeLeaveType.replace('_', ' ')}</span>` : ''}
+            tbody.innerHTML = filtered.map(student => `
+                <tr>
+                    <td style="font-weight:600;">${student.rollNumber}</td>
+                    <td>${student.user.name}</td>
+                    <td><span class="badge" style="background: rgba(15,23,42,0.05); color:#0f172a;">${student.classSection}</span></td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="radio" name="status-${student.user.id}" value="PRESENT" checked>
+                                <span style="font-size:12px; color: var(--success); font-weight:600;">Present</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="radio" name="status-${student.user.id}" value="ABSENT">
+                                <span style="font-size:12px; color: #ef4444; font-weight:600;">Absent</span>
+                            </label>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
 
-        // Form submission
+        // Submit Attendance
         document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const subjectId = document.getElementById('subjectSelect').value;
             const date = document.getElementById('attendanceDate').value;
             
-            if (!subjectId || !date) {
-                alert('Please select subject and date');
-                return;
-            }
+            if (!subjectId || allStudentsList.length === 0) return;
 
-            const studentStatuses = {};
-            document.querySelectorAll('#attendanceTableBody tr').forEach(row => {
-                const studentId = row.getAttribute('data-student-id');
-                const status = row.querySelector(`input[name="status_${studentId}"]:checked`).value;
-                studentStatuses[studentId] = status;
+            const records = allStudentsList.map(student => {
+                const checkedRadio = document.querySelector(`input[name="status-${student.user.id}"]:checked`);
+                return {
+                    studentEmail: student.user.email,
+                    status: checkedRadio ? checkedRadio.value : 'PRESENT'
+                };
             });
 
             try {
-                const response = await fetch('/api/attendance/mark', {
+                const response = await fetch(`/api/attendance/subject/${subjectId}/mark?date=${date}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        subjectId: parseInt(subjectId),
-                        date: date,
-                        studentStatuses: studentStatuses
-                    })
+                    body: JSON.stringify(records)
                 });
 
-                const data = await response.json();
                 if (response.ok) {
-                    alert('Attendance marked successfully for ' + data.recordsCount + ' students');
-                    document.getElementById('attendanceForm').reset();
-                    document.getElementById('attendanceTableBody').innerHTML = '';
+                    alert('Attendance marked successfully!');
+                    location.reload();
                 } else {
-                    alert('Error: ' + data);
+                    alert('Failed to mark attendance');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to submit attendance');
+                console.error(error);
+                alert('Connection error');
             }
         });
+
+        // Enroll Student Action
+        document.getElementById('btnEnrollStudent').addEventListener('click', async function() {
+            const subjectId = document.getElementById('subjectSelect').value;
+            const studentId = document.getElementById('enrollStudentSelect').value;
+            if (!subjectId || !studentId) return;
+
+            try {
+                const response = await fetch(`/api/attendance/subject/${subjectId}/enroll/${studentId}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    alert('Student enrolled successfully!');
+                    // Reload students
+                    const subResponse = await fetch(`/api/attendance/subject/${subjectId}/students`);
+                    if (subResponse.ok) {
+                        allStudentsList = await subResponse.json();
+                        updateAttendanceTable();
+                    }
+                } else {
+                    alert('Enrollment failed');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error');
+            }
+        });
+
+        async function processLeaveRequest(id, status) {
+            try {
+                const response = await fetch(`/api/leaves/${id}/status?status=${status}`, {
+                    method: 'PUT'
+                });
+                if (response.ok) {
+                    alert(`Leave request ${status.toLowerCase()} successfully`);
+                    location.reload();
+                } else {
+                    alert('Failed to update leave');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
     </script>
 </body>
 </html>

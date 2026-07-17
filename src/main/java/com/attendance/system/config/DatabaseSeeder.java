@@ -20,11 +20,13 @@ import com.attendance.system.model.User;
 import com.attendance.system.repository.AttendanceRepository;
 import com.attendance.system.repository.EnrollmentRepository;
 import com.attendance.system.repository.ExamRepository;
+import com.attendance.system.repository.GradeRepository;
 import com.attendance.system.repository.SubjectRepository;
 import com.attendance.system.repository.TimetableRepository;
 import com.attendance.system.repository.UserRepository;
 import com.attendance.system.service.UserService;
 import com.attendance.system.model.TimetableEntry;
+import com.attendance.system.model.Grade;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
@@ -49,6 +51,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
     private TimetableRepository timetableRepository;
+
+    @Autowired
+    private GradeRepository gradeRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -190,6 +195,16 @@ public class DatabaseSeeder implements CommandLineRunner {
         
         timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "FRIDAY", "10:15 - 11:15", "CS-B", "Room 301"));
         timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "FRIDAY", "11:30 - 12:30", "CS-B", "Room 302"));
+
+        // 8. Create Mock Grades
+        gradeRepository.save(new Grade(student1, dsa, 85, 100, "Midterm Exam", "Excellent theoretical knowledge. Good job."));
+        gradeRepository.save(new Grade(student1, web, 92, 100, "Midterm Exam", "Superb styling and visual design. Keep it up!"));
+        
+        gradeRepository.save(new Grade(student2, dsa, 74, 100, "Midterm Exam", "Satisfactory. Needs to spend more time on complex data structures."));
+        gradeRepository.save(new Grade(student2, web, 88, 100, "Midterm Exam", "Very good presentation. Try to implement more responsive components."));
+
+        gradeRepository.save(new Grade(student3, dsa, 68, 100, "Midterm Exam", "Needs improvement. Focus on algorithmic complexities."));
+        gradeRepository.save(new Grade(student3, dbms, 95, 100, "Midterm Exam", "Outstanding query optimization skills. Exemplary work."));
 
         System.out.println("Database seeding completed successfully.");
     }

@@ -39,6 +39,9 @@ public class ViewController {
     @Autowired
     private TimetableRepository timetableRepository;
 
+    @Autowired
+    private com.attendance.system.repository.GradeRepository gradeRepository;
+
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -146,13 +149,35 @@ public class ViewController {
         Optional<StudentProfile> profile = userService.getStudentProfile(user);
         Map<String, Object> attendanceReport = attendanceService.getStudentAttendanceReport(user.getEmail());
         List<LeaveRequest> leaves = leaveService.getStudentLeaves(user);
-        List<Subject> subjects = subjectRepository.findAll(); // Simplified subjects list
+        List<Subject> subjects = subjectRepository.findAll();
 
         model.addAttribute("user", user);
         model.addAttribute("profile", profile.orElse(null));
         model.addAttribute("attendance", attendanceReport);
         model.addAttribute("leaves", leaves);
         model.addAttribute("subjects", subjects);
+
+        // Notifications & Alerts
+        List<Exam> upcomingExams = examService.getAllUpcomingExams();
+        model.addAttribute("upcomingExams", upcomingExams);
+
+        if (profile.isPresent()) {
+            String section = profile.get().getClassSection();
+            List<TimetableEntry> timetable = timetableRepository.findByClassSection(section);
+            List<TimetableEntry> cancelledClasses = timetable.stream().filter(TimetableEntry::isCancelled).toList();
+            model.addAttribute("cancelledClasses", cancelledClasses);
+        }
+
+        boolean debarmentWarning = false;
+        if (attendanceReport != null && attendanceReport.containsKey("academicPercentage")) {
+            try {
+                double percent = Double.parseDouble(attendanceReport.get("academicPercentage").toString());
+                if (percent < 75.0) {
+                    debarmentWarning = true;
+                }
+            } catch (Exception e) {}
+        }
+        model.addAttribute("debarmentWarning", debarmentWarning);
 
         return "student-dashboard";
     }
@@ -213,5 +238,45 @@ public class ViewController {
         model.addAttribute("students", userService.getAllStudentProfiles());
 
         return "students";
+    }
+
+    @GetMapping("/report-card")
+    public String reportCard(Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+        if (user.getRole() != Role.ROLE_STUDENT) {
+            return "redirect:/dashboard";
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("role", user.getRole().name());
+        model.addAttribute("grades", gradeRepository.findByStudent(user));
+
+        return "report-card";
+    }
+
+    @GetMapping("/gradebook")
+    public String gradebook(Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+        if (user.getRole() == Role.ROLE_STUDENT) {
+            return "redirect:/dashboard";
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("role", user.getRole().name());
+        
+        List<Subject> subjects;
+        if (user.getRole() == Role.ROLE_TEACHER) {
+            subjects = subjectRepository.findByTeacher(user);
+        } else {
+            subjects = subjectRepository.findAll();
+        }
+
+        model.addAttribute("subjects", subjects);
+        model.addAttribute("students", userService.getAllStudentProfiles());
+        model.addAttribute("teachers", userService.getTeachers());
+
+        return "gradebook";
     }
 }

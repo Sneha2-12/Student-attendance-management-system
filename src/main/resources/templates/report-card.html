@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Report Card - Attendance Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .report-card-container {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            max-width: 900px;
+            margin: 24px auto;
+        }
+
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .report-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .report-header p {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .student-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .detail-item {
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .detail-item strong {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .grade-badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            display: inline-block;
+        }
+
+        .grade-a { background: #dcfce7; color: #15803d; }
+        .grade-b { background: #dbeafe; color: #1d4ed8; }
+        .grade-c { background: #fef9c3; color: #a16207; }
+        .grade-d { background: #ffedd5; color: #c2410c; }
+        .grade-f { background: #fee2e2; color: #b91c1c; }
+
+        .transcript-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+        }
+
+        .summary-stat {
+            font-size: 16px;
+            color: #0f172a;
+        }
+
+        .summary-stat strong {
+            font-size: 20px;
+            color: var(--primary);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body th:data-user-role="${role}">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active" th:if="${role == 'ROLE_STUDENT'}">
+                    <a href="/report-card">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Report Card</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/timetable">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Class Timetable</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">User Name</h4>
+                        <span th:text="${role.substring(5)}">Role</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="report-card-container">
+                <div class="report-header">
+                    <h2>Academic Performance Transcript</h2>
+                    <p>Official Grade Report Card - Spring Semester 2026</p>
+                </div>
+
+                <div class="student-details-grid">
+                    <div class="detail-item"><strong>Student Name:</strong> <span th:text="${user.name}">John Doe</span></div>
+                    <div class="detail-item"><strong>Email Address:</strong> <span th:text="${user.email}">student@school.com</span></div>
+                    <div class="detail-item"><strong>Academic Level:</strong> Undergraduate (UG)</div>
+                    <div class="detail-item"><strong>Grading Cycle:</strong> Midterm Assessments</div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject Code</th>
+                                <th>Subject Name</th>
+                                <th>Assessment Type</th>
+                                <th>Marks Obtained</th>
+                                <th>Max Marks</th>
+                                <th>Grade</th>
+                                <th>Instructor Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="grade : ${grades}">
+                                <td th:text="${grade.subject.courseCode}" style="font-weight: 600;">CS-101</td>
+                                <td th:text="${grade.subject.name}">DSA</td>
+                                <td th:text="${grade.examType}">Midterm Exam</td>
+                                <td th:text="${grade.marksObtained}" style="font-weight: 700;">85</td>
+                                <td th:text="${grade.maxMarks}">100</td>
+                                <td>
+                                    <span th:text="${grade.getLetterGrade()}" 
+                                          th:classappend="${grade.getLetterGrade().startsWith('A') ? 'grade-badge grade-a' : (grade.getLetterGrade().startsWith('B') ? 'grade-badge grade-b' : (grade.getLetterGrade().startsWith('F') ? 'grade-badge grade-f' : 'grade-badge grade-c'))}">A</span>
+                                </td>
+                                <td th:text="${grade.remarks}" style="font-size: 12px; color: #475569; max-width: 200px;">Excellent!</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(grades)}">
+                                <td colspan="7" style="text-align: center; color: var(--text-muted);">No academic grades available yet. Check back after evaluations.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Summary statistics if grades are seeded -->
+                <div class="transcript-footer" th:if="${not #lists.isEmpty(grades)}">
+                    <div class="summary-stat">
+                        Total Subjects evaluated: <strong th:text="${#lists.size(grades)}">2</strong>
+                    </div>
+                    <div class="summary-stat">
+                        Aggregate Performance: 
+                        <strong th:text="${#aggregates.sum(grades.![marksObtained])} + ' / ' + ${#aggregates.sum(grades.![maxMarks])}">180 / 200</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

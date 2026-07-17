@@ -229,6 +229,18 @@
                         <span>Class Timetable</span>
                     </a>
                 </li>
+                <li class="nav-item" th:if="${role == 'ROLE_STUDENT'}">
+                    <a href="/report-card">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Report Card</span>
+                    </a>
+                </li>
+                <li class="nav-item" th:if="${role != 'ROLE_STUDENT'}">
+                    <a href="/gradebook">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Gradebook</span>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a href="/calendar">
                         <i class="fa-solid fa-calendar-days"></i>
@@ -290,9 +302,18 @@
                                 <i class="fa-solid fa-location-dot"></i>
                                 <span th:text="${slot.roomNumber}">Room 301</span>
                             </div>
-                            <!-- Admin specific buttons -->
+                            <!-- Admin specific buttons (Safely using HTML5 data attributes) -->
                             <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 8px;" th:if="${role == 'ROLE_ADMIN'}">
-                                <button th:onclick="'openEditModal(' + ${slot.id} + ', ' + ${slot.subject.id} + ', ' + ${slot.teacher.id} + ', \'' + ${slot.dayOfWeek} + '\', \'' + ${slot.timeSlot} + '\', \'' + ${slot.classSection} + '\', \'' + ${slot.roomNumber} + '\', ' + ${slot.cancelled} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
+                                <button th:data-id="${slot.id}"
+                                        th:data-subject-id="${slot.subject.id}"
+                                        th:data-teacher-id="${slot.teacher.id}"
+                                        th:data-day="${slot.dayOfWeek}"
+                                        th:data-time="${slot.timeSlot}"
+                                        th:data-section="${slot.classSection}"
+                                        th:data-room="${slot.roomNumber}"
+                                        th:data-cancelled="${slot.cancelled}"
+                                        onclick="editSlotBtnClick(this)"
+                                        class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
                                 <button th:onclick="'deleteSlot(' + ${slot.id} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
@@ -327,7 +348,16 @@
                             </div>
                             <!-- Admin specific buttons -->
                             <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 8px;" th:if="${role == 'ROLE_ADMIN'}">
-                                <button th:onclick="'openEditModal(' + ${slot.id} + ', ' + ${slot.subject.id} + ', ' + ${slot.teacher.id} + ', \'' + ${slot.dayOfWeek} + '\', \'' + ${slot.timeSlot} + '\', \'' + ${slot.classSection} + '\', \'' + ${slot.roomNumber} + '\', ' + ${slot.cancelled} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
+                                <button th:data-id="${slot.id}"
+                                        th:data-subject-id="${slot.subject.id}"
+                                        th:data-teacher-id="${slot.teacher.id}"
+                                        th:data-day="${slot.dayOfWeek}"
+                                        th:data-time="${slot.timeSlot}"
+                                        th:data-section="${slot.classSection}"
+                                        th:data-room="${slot.roomNumber}"
+                                        th:data-cancelled="${slot.cancelled}"
+                                        onclick="editSlotBtnClick(this)"
+                                        class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
                                 <button th:onclick="'deleteSlot(' + ${slot.id} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
@@ -362,7 +392,16 @@
                             </div>
                             <!-- Admin specific buttons -->
                             <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 8px;" th:if="${role == 'ROLE_ADMIN'}">
-                                <button th:onclick="'openEditModal(' + ${slot.id} + ', ' + ${slot.subject.id} + ', ' + ${slot.teacher.id} + ', \'' + ${slot.dayOfWeek} + '\', \'' + ${slot.timeSlot} + '\', \'' + ${slot.classSection} + '\', \'' + ${slot.roomNumber} + '\', ' + ${slot.cancelled} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
+                                <button th:data-id="${slot.id}"
+                                        th:data-subject-id="${slot.subject.id}"
+                                        th:data-teacher-id="${slot.teacher.id}"
+                                        th:data-day="${slot.dayOfWeek}"
+                                        th:data-time="${slot.timeSlot}"
+                                        th:data-section="${slot.classSection}"
+                                        th:data-room="${slot.roomNumber}"
+                                        th:data-cancelled="${slot.cancelled}"
+                                        onclick="editSlotBtnClick(this)"
+                                        class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
                                 <button th:onclick="'deleteSlot(' + ${slot.id} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
@@ -397,7 +436,16 @@
                             </div>
                             <!-- Admin specific buttons -->
                             <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 8px;" th:if="${role == 'ROLE_ADMIN'}">
-                                <button th:onclick="'openEditModal(' + ${slot.id} + ', ' + ${slot.subject.id} + ', ' + ${slot.teacher.id} + ', \'' + ${slot.dayOfWeek} + '\', \'' + ${slot.timeSlot} + '\', \'' + ${slot.classSection} + '\', \'' + ${slot.roomNumber} + '\', ' + ${slot.cancelled} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
+                                <button th:data-id="${slot.id}"
+                                        th:data-subject-id="${slot.subject.id}"
+                                        th:data-teacher-id="${slot.teacher.id}"
+                                        th:data-day="${slot.dayOfWeek}"
+                                        th:data-time="${slot.timeSlot}"
+                                        th:data-section="${slot.classSection}"
+                                        th:data-room="${slot.roomNumber}"
+                                        th:data-cancelled="${slot.cancelled}"
+                                        onclick="editSlotBtnClick(this)"
+                                        class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
                                 <button th:onclick="'deleteSlot(' + ${slot.id} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
@@ -432,7 +480,16 @@
                             </div>
                             <!-- Admin specific buttons -->
                             <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 8px;" th:if="${role == 'ROLE_ADMIN'}">
-                                <button th:onclick="'openEditModal(' + ${slot.id} + ', ' + ${slot.subject.id} + ', ' + ${slot.teacher.id} + ', \'' + ${slot.dayOfWeek} + '\', \'' + ${slot.timeSlot} + '\', \'' + ${slot.classSection} + '\', \'' + ${slot.roomNumber} + '\', ' + ${slot.cancelled} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
+                                <button th:data-id="${slot.id}"
+                                        th:data-subject-id="${slot.subject.id}"
+                                        th:data-teacher-id="${slot.teacher.id}"
+                                        th:data-day="${slot.dayOfWeek}"
+                                        th:data-time="${slot.timeSlot}"
+                                        th:data-section="${slot.classSection}"
+                                        th:data-room="${slot.roomNumber}"
+                                        th:data-cancelled="${slot.cancelled}"
+                                        onclick="editSlotBtnClick(this)"
+                                        class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto;">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
                                 <button th:onclick="'deleteSlot(' + ${slot.id} + ')'" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11px; height: auto; width: auto; border-color: rgba(239, 68, 68, 0.2); color: #f87171;">
@@ -526,6 +583,19 @@
         // Admin Timetable management script
         const userRole = [[${role}]];
         
+        function editSlotBtnClick(button) {
+            const id = button.getAttribute('data-id');
+            const subjectId = button.getAttribute('data-subject-id');
+            const teacherId = button.getAttribute('data-teacher-id');
+            const day = button.getAttribute('data-day');
+            const time = button.getAttribute('data-time');
+            const section = button.getAttribute('data-section');
+            const room = button.getAttribute('data-room');
+            const cancelled = button.getAttribute('data-cancelled') === 'true';
+            
+            openEditModal(id, subjectId, teacherId, day, time, section, room, cancelled);
+        }
+
         function openAddModal() {
             document.getElementById('modalTitle').textContent = "Schedule Class Slot";
             document.getElementById('slotId').value = "";

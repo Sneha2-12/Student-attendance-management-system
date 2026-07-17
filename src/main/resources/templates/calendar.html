@@ -315,6 +315,18 @@
                         <span>Class Timetable</span>
                     </a>
                 </li>
+                <li class="nav-item" th:if="${role == 'ROLE_STUDENT'}">
+                    <a href="/report-card">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Report Card</span>
+                    </a>
+                </li>
+                <li class="nav-item" th:if="${role != 'ROLE_STUDENT'}">
+                    <a href="/gradebook">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Gradebook</span>
+                    </a>
+                </li>
                 <li class="nav-item active">
                     <a href="/calendar">
                         <i class="fa-solid fa-calendar-days"></i>

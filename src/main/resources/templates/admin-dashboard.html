@@ -7,6 +7,59 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Drawer sliding styles */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -360px; /* Initially hidden on the right */
+            width: 360px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -10px 0 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .side-panel.open {
+            right: 0;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+        }
+        .close-panel-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .close-panel-btn:hover {
+            color: #0f172a;
+        }
+    </style>
 </head>
 <body data-user-role="ROLE_ADMIN">
     <div class="dashboard-container">
@@ -37,6 +90,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="/gradebook">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Gradebook</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="/calendar">
                         <i class="fa-solid fa-calendar-days"></i>
                         <span>Exam Calendar</span>
@@ -60,10 +119,20 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <div class="top-bar">
+            <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center;">
                 <div class="page-title">
                     <h1>Administrator Control Panel</h1>
                     <p>Manage faculty, students, curriculum, and approvals</p>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <!-- Bell Icon -->
+                    <button onclick="toggleNotificationDrawer()" class="btn btn-secondary" style="width: 45px; height: 45px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; position: relative; border-color: #cbd5e1;">
+                        <i class="fa-solid fa-bell" style="font-size: 18px; margin: 0; color: #475569;"></i>
+                        <span style="position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+                    </button>
+                    <button onclick="openAddStudentModal()" class="btn" style="width: auto; height: 45px; padding: 0 20px;">
+                        Add Student <i class="fa-solid fa-user-plus" style="margin-left: 8px;"></i>
+                    </button>
                 </div>
             </div>
 
@@ -110,11 +179,10 @@
                 </div>
             </div>
 
-            <!-- Dashboard Sections -->
+            <!-- Dashboard sections -->
             <div class="dashboard-sections">
-                <!-- Left Section: Student & Teacher Management -->
+                <!-- Left: Student Profiles list -->
                 <div>
-                    <!-- Student Profiles -->
                     <div class="section-card">
                         <div class="section-header">
                             <h2>Registered Students</h2>
@@ -125,45 +193,19 @@
                                     <tr>
                                         <th>Roll Number</th>
                                         <th>Name</th>
-                                        <th>Email</th>
+                                        <th>Email Address</th>
                                         <th>Class Section</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:each="student : ${students}">
-                                        <td th:text="${student.rollNumber}" style="font-weight: 600;">RollNo</td>
+                                        <td th:text="${student.rollNumber}" style="font-weight: 600;">CS202301</td>
                                         <td th:text="${student.user.name}">John Doe</td>
                                         <td th:text="${student.user.email}">john@school.com</td>
-                                        <td><span class="badge" th:text="${student.classSection}" style="background: rgba(255,255,255,0.05);">CS-A</span></td>
+                                        <td><span class="badge" th:text="${student.classSection}" style="background: rgba(15, 23, 42, 0.05); color: #0f172a; border: 1px solid #cbd5e1;">CS-A</span></td>
                                     </tr>
                                     <tr th:if="${#lists.isEmpty(students)}">
-                                        <td colspan="4" style="text-align: center; color: var(--text-muted);">No students registered.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Teacher Profiles -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h2>Faculty Members</h2>
-                        </div>
-                        <div class="table-responsive">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="teacher : ${teachers}">
-                                        <td th:text="${teacher.name}" style="font-weight: 600;">Dr. Sarah Connor</td>
-                                        <td th:text="${teacher.email}">sarah@school.com</td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(teachers)}">
-                                        <td colspan="2" style="text-align: center; color: var(--text-muted);">No teachers registered.</td>
+                                        <td colspan="4" style="text-align: center; color: var(--text-muted);">No student accounts found.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -171,56 +213,45 @@
                     </div>
                 </div>
 
-                <!-- Right Section: Leave approvals and Subjects -->
+                <!-- Right Sidebar columns -->
                 <div>
-                    <!-- Pending Leaves -->
-                    <div class="section-card">
+                    <!-- Pending leaves list -->
+                    <div class="section-card" style="margin-bottom: 24px;">
                         <div class="section-header">
-                            <h2>Pending Leave Requests</h2>
+                            <h2>Pending Leaves Approval</h2>
                         </div>
                         <div class="table-responsive">
-                            <div th:each="req : ${pendingLeaves}" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div th:each="req : ${pendingLeaves}" style="border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 12px; background: #f8fafc;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <span class="badge" th:text="${req.leaveType}" th:classappend="${req.leaveType.name() == 'MEDICAL' ? 'badge-medical' : 'badge-duty'}">MEDICAL</span>
-                                    <span style="font-size: 11px; color: var(--text-secondary);" th:text="${req.startDate} + ' to ' + ${req.endDate}">Date</span>
+                                    <span style="font-size: 11px; color: var(--text-secondary);" th:text="${req.startDate} + ' to ' + ${req.endDate}">2026-06-20 to 2026-06-22</span>
                                 </div>
-                                <h4 th:text="${req.student.name}" style="font-size: 14px; margin-bottom: 4px;">Student Name</h4>
-                                <p th:text="${req.reason}" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;"></p>
+                                <h4 th:text="${req.student.name}" style="font-size: 14px; margin-bottom: 4px; color: #0f172a;">Student Name</h4>
+                                <p th:text="'Reason: ' + ${req.reason}" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;"></p>
                                 
-                                <div th:if="${req.documentPath != null and req.documentPath != ''}" style="margin-bottom: 12px; font-size: 12px;">
-                                    <span style="color: var(--primary);">
-                                        <i class="fa-solid fa-paperclip" style="margin-right: 6px;"></i> Attachment: <span th:text="${req.documentPath}">doc.pdf</span>
-                                    </span>
-                                </div>
-
                                 <div style="display: flex; gap: 8px;">
-                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'APPROVED\')'" class="btn btn-sm" style="background: var(--success); padding: 6px 10px; font-size: 12px;">
-                                        Approve
-                                    </button>
-                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'REJECTED\')'" class="btn btn-secondary btn-sm" style="border-color: rgba(239, 68, 68, 0.2); color: #f87171; padding: 6px 10px; font-size: 12px;">
-                                        Reject
-                                    </button>
+                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'APPROVED\')'" class="btn btn-sm" style="background: var(--success); font-size: 12px; padding: 6px 12px; width: auto; height: auto;">Approve</button>
+                                    <button th:onclick="'processLeaveRequest(' + ${req.id} + ', \'REJECTED\')'" class="btn btn-secondary btn-sm" style="color: #ef4444; border-color: rgba(239,68,68,0.2); font-size: 12px; padding: 6px 12px; width: auto; height: auto;">Reject</button>
                                 </div>
                             </div>
-                            
                             <div th:if="${#lists.isEmpty(pendingLeaves)}" style="text-align: center; color: var(--text-muted); padding: 10px 0;">
                                 No pending leave requests.
                             </div>
                         </div>
                     </div>
 
-                    <!-- Subjects list -->
+                    <!-- Curriculum subjects list -->
                     <div class="section-card">
                         <div class="section-header">
                             <h2>Curriculum Subjects</h2>
                         </div>
-                        <div class="table-responsive">
-                            <div th:each="sub : ${subjects}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-glass);">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div th:each="sub : ${subjects}" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
                                 <div>
-                                    <h4 th:text="${sub.name}" style="font-size: 14px; font-weight: 600;">Data Structures</h4>
-                                    <span th:text="'Instructor: ' + ${sub.teacher.name}" style="font-size: 12px; color: var(--text-secondary);">Teacher Name</span>
+                                    <h4 th:text="${sub.name}" style="font-size: 14px; font-weight: 600; color: #0f172a;">Data Structures</h4>
+                                    <span th:text="'Instructor: ' + ${sub.teacher.name}" style="font-size: 11px; color: var(--text-secondary);">Teacher Name</span>
                                 </div>
-                                <span class="badge" th:text="${sub.courseCode}" style="background: var(--primary-glow); color: var(--primary);">CS-101</span>
+                                <span class="badge" th:text="${sub.courseCode}" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">CS-101</span>
                             </div>
                             <div th:if="${#lists.isEmpty(subjects)}" style="text-align: center; color: var(--text-muted); padding: 10px 0;">
                                 No subjects created yet.
@@ -232,6 +263,161 @@
         </div>
     </div>
 
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="font-size: 18px; font-weight: 600;">Add New Student</h2>
+                <button onclick="closeAddStudentModal()" class="close-panel-btn">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label for="studentName">Full Name</label>
+                    <input type="text" id="studentName" class="form-control" placeholder="e.g. John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="studentEmail">Email Address</label>
+                    <input type="email" id="studentEmail" class="form-control" placeholder="e.g. john@school.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentPassword">Password</label>
+                    <input type="password" id="studentPassword" class="form-control" placeholder="Password (minimum 6 chars)" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentRoll">Roll Number</label>
+                        <input type="text" id="studentRoll" class="form-control" placeholder="e.g. CS202601" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentSection">Class Section</label>
+                        <select id="studentSection" class="form-control" required>
+                            <option value="CS-A">CS-A</option>
+                            <option value="CS-B">CS-B</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddStudentModal()" class="btn btn-secondary" style="width: auto;">Cancel</button>
+                    <button type="submit" class="btn" style="width: auto;">Register Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sideways Notifications Drawer -->
+    <div id="notificationDrawer" class="side-panel">
+        <div class="side-panel-header">
+            <h2>Notifications & Events</h2>
+            <button onclick="toggleNotificationDrawer()" class="close-panel-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex-grow: 1;">
+            <!-- Seeded Exams List -->
+            <div style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: var(--radius-md); padding: 16px;">
+                <h4 style="color: #1d4ed8; font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-calendar-check"></i> Upcoming Examinations
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                        <strong>DSA Midterm Exam</strong>
+                        <div style="color: #4b5563; font-size: 11px; margin-top: 4px;">CS-101 | Venue: Room 301</div>
+                    </div>
+                    <div style="font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                        <strong>DBMS Midterm Exam</strong>
+                        <div style="color: #4b5563; font-size: 11px; margin-top: 4px;">CS-103 | Venue: Room 302</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-md); padding: 16px;">
+                <h4 style="color: #d97706; font-size: 14px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-info"></i> Academic Notices
+                </h4>
+                <p style="color: #78350f; font-size: 12px; line-height: 1.4;">Class cancellations and substitutions will be displayed instantly inside student and faculty schedules.</p>
+            </div>
+        </div>
+    </div>
+
     <script th:src="@{/js/main.js}"></script>
+    <script>
+        function openAddStudentModal() {
+            document.getElementById('addStudentModal').style.display = "flex";
+        }
+        
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').style.display = "none";
+        }
+
+        function toggleNotificationDrawer() {
+            const drawer = document.getElementById('notificationDrawer');
+            drawer.classList.toggle('open');
+        }
+
+        // Add Student form submit
+        document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('studentName').value;
+            const email = document.getElementById('studentEmail').value;
+            const password = document.getElementById('studentPassword').value;
+            const rollNumber = document.getElementById('studentRoll').value;
+            const classSection = document.getElementById('studentSection').value;
+
+            const payload = {
+                name,
+                email,
+                password,
+                role: 'ROLE_STUDENT',
+                rollNumber,
+                classSection
+            };
+
+            try {
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('Student added successfully!');
+                    location.reload();
+                } else {
+                    const err = await response.json();
+                    alert('Registration failed: ' + (err.message || 'Error occurred'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error');
+            }
+        });
+
+        // Leave request processing
+        async function processLeaveRequest(id, status) {
+            try {
+                const response = await fetch(`/api/leaves/${id}/status?status=${status}`, {
+                    method: 'PUT'
+                });
+                if (response.ok) {
+                    alert(`Leave request ${status.toLowerCase()} successfully`);
+                    location.reload();
+                } else {
+                    alert('Failed to process leave request');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Connection error');
+            }
+        }
+    </script>
 </body>
 </html>
