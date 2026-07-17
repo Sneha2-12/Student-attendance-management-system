@@ -193,6 +193,25 @@ public class ViewController {
             model.addAttribute("timetable", timetableRepository.findAll());
         }
 
+        // Add drop down support data
+        model.addAttribute("teachers", userService.getTeachers());
+        model.addAttribute("subjects", subjectRepository.findAll());
+
         return "timetable";
+    }
+
+    @GetMapping("/students")
+    public String listStudents(Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+        if (user.getRole() == Role.ROLE_STUDENT) {
+            return "redirect:/dashboard"; // Students shouldn't view roster
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("role", user.getRole().name());
+        model.addAttribute("students", userService.getAllStudentProfiles());
+
+        return "students";
     }
 }

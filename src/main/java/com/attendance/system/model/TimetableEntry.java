@@ -14,6 +14,10 @@ public class TimetableEntry {
     @JoinColumn(name = "subject_id", referencedColumnName = "id", nullable = false)
     private Subject subject;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "teacher_id", referencedColumnName = "id", nullable = false)
+    private User teacher; // Specific assigned teacher/substitute for this slot
+
     @Column(nullable = false)
     private String dayOfWeek; // MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY
 
@@ -26,14 +30,19 @@ public class TimetableEntry {
     @Column(nullable = false)
     private String roomNumber; // e.g., "Room 301"
 
+    @Column(nullable = false)
+    private boolean cancelled = false; // Flag to indicate class cancellation
+
     public TimetableEntry() {}
 
-    public TimetableEntry(Subject subject, String dayOfWeek, String timeSlot, String classSection, String roomNumber) {
+    public TimetableEntry(Subject subject, User teacher, String dayOfWeek, String timeSlot, String classSection, String roomNumber) {
         this.subject = subject;
+        this.teacher = teacher;
         this.dayOfWeek = dayOfWeek;
         this.timeSlot = timeSlot;
         this.classSection = classSection;
         this.roomNumber = roomNumber;
+        this.cancelled = false;
     }
 
     public Long getId() {
@@ -50,6 +59,14 @@ public class TimetableEntry {
 
     public void setSubject(Subject subject) {
         this.subject = subject;
+    }
+
+    public User getTeacher() {
+        return teacher;
+    }
+
+    public void setTeacher(User teacher) {
+        this.teacher = teacher;
     }
 
     public String getDayOfWeek() {
@@ -82,5 +99,13 @@ public class TimetableEntry {
 
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    public void setCancelled(boolean cancelled) {
+        this.cancelled = cancelled;
     }
 }

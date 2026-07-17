@@ -163,33 +163,33 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 7. Create Timetable Entries
         // Section CS-A (DSA, Web Development, DBMS)
-        timetableRepository.save(new TimetableEntry(dsa, "MONDAY", "09:00 - 10:00", "CS-A", "Room 301"));
-        timetableRepository.save(new TimetableEntry(web, "MONDAY", "10:15 - 11:15", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "MONDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(web, web.getTeacher(), "MONDAY", "10:15 - 11:15", "CS-A", "Room 301"));
         
-        timetableRepository.save(new TimetableEntry(web, "TUESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
-        timetableRepository.save(new TimetableEntry(dbms, "TUESDAY", "11:30 - 12:30", "CS-A", "Room 302"));
+        timetableRepository.save(new TimetableEntry(web, web.getTeacher(), "TUESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "TUESDAY", "11:30 - 12:30", "CS-A", "Room 302"));
         
-        timetableRepository.save(new TimetableEntry(dsa, "WEDNESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
-        timetableRepository.save(new TimetableEntry(dbms, "WEDNESDAY", "10:15 - 11:15", "CS-A", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "WEDNESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "WEDNESDAY", "10:15 - 11:15", "CS-A", "Room 302"));
         
-        timetableRepository.save(new TimetableEntry(web, "THURSDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(web, web.getTeacher(), "THURSDAY", "09:00 - 10:00", "CS-A", "Room 301"));
         
-        timetableRepository.save(new TimetableEntry(dsa, "FRIDAY", "09:00 - 10:00", "CS-A", "Room 301"));
-        timetableRepository.save(new TimetableEntry(dbms, "FRIDAY", "11:30 - 12:30", "CS-A", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "FRIDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "FRIDAY", "11:30 - 12:30", "CS-A", "Room 302"));
 
         // Section CS-B (DBMS, DSA)
-        timetableRepository.save(new TimetableEntry(dbms, "MONDAY", "09:00 - 10:00", "CS-B", "Room 302"));
-        timetableRepository.save(new TimetableEntry(dsa, "MONDAY", "10:15 - 11:15", "CS-B", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "MONDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "MONDAY", "10:15 - 11:15", "CS-B", "Room 301"));
         
-        timetableRepository.save(new TimetableEntry(dsa, "TUESDAY", "09:00 - 10:00", "CS-B", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "TUESDAY", "09:00 - 10:00", "CS-B", "Room 301"));
         
-        timetableRepository.save(new TimetableEntry(dbms, "WEDNESDAY", "09:00 - 10:00", "CS-B", "Room 302"));
-        timetableRepository.save(new TimetableEntry(dsa, "WEDNESDAY", "11:30 - 12:30", "CS-B", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "WEDNESDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "WEDNESDAY", "11:30 - 12:30", "CS-B", "Room 301"));
         
-        timetableRepository.save(new TimetableEntry(dbms, "THURSDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "THURSDAY", "09:00 - 10:00", "CS-B", "Room 302"));
         
-        timetableRepository.save(new TimetableEntry(dsa, "FRIDAY", "10:15 - 11:15", "CS-B", "Room 301"));
-        timetableRepository.save(new TimetableEntry(dbms, "FRIDAY", "11:30 - 12:30", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "FRIDAY", "10:15 - 11:15", "CS-B", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "FRIDAY", "11:30 - 12:30", "CS-B", "Room 302"));
 
         System.out.println("Database seeding completed successfully.");
     }

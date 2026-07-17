@@ -303,6 +303,12 @@
                         <span>Dashboard</span>
                     </a>
                 </li>
+                <li class="nav-item" th:if="${role != 'ROLE_STUDENT'}">
+                    <a href="/students">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Class Roster</span>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a href="/timetable">
                         <i class="fa-solid fa-clock"></i>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Groups Roster - Academics Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .class-group-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 28px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .class-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .class-group-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .class-group-header h2 i {
+            color: var(--primary);
+        }
+
+        .student-count-badge {
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            border: 1px solid #dbeafe;
+        }
+    </style>
+</head>
+<body th:data-user-role="${role}">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/students">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Class Roster</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/timetable">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Class Timetable</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">User Name</h4>
+                        <span th:text="${role.substring(5)}">Role</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>Class Groups & Student Roster</h1>
+                    <p>View registered student details grouped by academic section</p>
+                </div>
+            </div>
+
+            <!-- CS-A Group Section -->
+            <div class="class-group-card">
+                <div class="class-group-header">
+                    <h2><i class="fa-solid fa-people-group"></i> Class Section CS-A</h2>
+                    <span class="student-count-badge" th:text="${#lists.size(students.?[classSection == 'CS-A'])} + ' Students'">0 Students</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 250px;">Roll Number</th>
+                                <th>Student Name</th>
+                                <th>Email Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="student : ${students}" th:if="${student.classSection == 'CS-A'}">
+                                <td th:text="${student.rollNumber}" style="font-weight: 600; color: #1e3a8a;">CS001</td>
+                                <td th:text="${student.user.name}">Student Name</td>
+                                <td th:text="${student.user.email}">student@school.com</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(students.?[classSection == 'CS-A'])}">
+                                <td colspan="3" style="text-align: center; color: var(--text-muted);">No students in this section.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CS-B Group Section -->
+            <div class="class-group-card">
+                <div class="class-group-header">
+                    <h2><i class="fa-solid fa-people-group"></i> Class Section CS-B</h2>
+                    <span class="student-count-badge" th:text="${#lists.size(students.?[classSection == 'CS-B'])} + ' Students'">0 Students</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 250px;">Roll Number</th>
+                                <th>Student Name</th>
+                                <th>Email Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="student : ${students}" th:if="${student.classSection == 'CS-B'}">
+                                <td th:text="${student.rollNumber}" style="font-weight: 600; color: #1e3a8a;">CS002</td>
+                                <td th:text="${student.user.name}">Student Name</td>
+                                <td th:text="${student.user.email}">student@school.com</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(students.?[classSection == 'CS-B'])}">
+                                <td colspan="3" style="text-align: center; color: var(--text-muted);">No students in this section.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
