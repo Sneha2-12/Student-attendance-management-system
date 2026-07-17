@@ -490,24 +490,35 @@
             const studentId = document.getElementById('enrollStudentSelect').value;
             if (!subjectId || !studentId) return;
 
+            const token = localStorage.getItem('jwt_token') || getCookie('jwt_token');
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+
             try {
                 const response = await fetch(`/api/attendance/subject/${subjectId}/enroll/${studentId}`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: headers
                 });
+                
                 if (response.ok) {
                     alert('Student enrolled successfully!');
                     // Reload students
-                    const subResponse = await fetch(`/api/attendance/subject/${subjectId}/students`);
+                    const subResponse = await fetch(`/api/attendance/subject/${subjectId}/students`, {
+                        headers: headers
+                    });
                     if (subResponse.ok) {
                         allStudentsList = await subResponse.json();
                         updateAttendanceTable();
                     }
                 } else {
-                    alert('Enrollment failed');
+                    const errData = await response.json();
+                    alert('Enrollment failed: ' + (errData.error || 'Server error'));
                 }
             } catch (error) {
                 console.error(error);
-                alert('Connection error');
+                alert('Connection error: ' + error.message);
             }
         });
 
