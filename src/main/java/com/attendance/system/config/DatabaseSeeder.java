@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Random;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -58,7 +59,16 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() > 0) {
-            return; // Database already seeded
+            System.out.println("Database already has users. Checking if timetable/grades need seeding...");
+            if (timetableRepository.count() == 0) {
+                System.out.println("Timetable is empty. Seeding default timetable entries...");
+                seedTimetableOnly();
+            }
+            if (gradeRepository.count() == 0) {
+                System.out.println("Grades are empty. Seeding default grades...");
+                seedGradesOnly();
+            }
+            return;
         }
 
         System.out.println("Seeding database with demo school records...");
@@ -207,5 +217,82 @@ public class DatabaseSeeder implements CommandLineRunner {
         gradeRepository.save(new Grade(student3, dbms, 95, 100, "Midterm Exam", "Outstanding query optimization skills. Exemplary work."));
 
         System.out.println("Database seeding completed successfully.");
+    }
+
+    private void seedTimetableOnly() {
+        Optional<Subject> dsaOpt = subjectRepository.findByCourseCode("CS-101");
+        Optional<Subject> webOpt = subjectRepository.findByCourseCode("CS-102");
+        Optional<Subject> dbmsOpt = subjectRepository.findByCourseCode("CS-103");
+
+        if (dsaOpt.isEmpty() || webOpt.isEmpty() || dbmsOpt.isEmpty()) {
+            System.out.println("Subjects not found. Cannot seed timetable.");
+            return;
+        }
+
+        Subject dsa = dsaOpt.get();
+        Subject web = webOpt.get();
+        Subject dbms = dbmsOpt.get();
+
+        // Section CS-A (DSA, Web Development, DBMS)
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "MONDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(web, web.getTeacher(), "MONDAY", "10:15 - 11:15", "CS-A", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(web, web.getTeacher(), "TUESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "TUESDAY", "11:30 - 12:30", "CS-A", "Room 302"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "WEDNESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "WEDNESDAY", "10:15 - 11:15", "CS-A", "Room 302"));
+        
+        timetableRepository.save(new TimetableEntry(web, web.getTeacher(), "THURSDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "FRIDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "FRIDAY", "11:30 - 12:30", "CS-A", "Room 302"));
+
+        // Section CS-B (DBMS, DSA)
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "MONDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "MONDAY", "10:15 - 11:15", "CS-B", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "TUESDAY", "09:00 - 10:00", "CS-B", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "WEDNESDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "WEDNESDAY", "11:30 - 12:30", "CS-B", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "THURSDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, dsa.getTeacher(), "FRIDAY", "10:15 - 11:15", "CS-B", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, dbms.getTeacher(), "FRIDAY", "11:30 - 12:30", "CS-B", "Room 302"));
+
+        System.out.println("Timetable entries seeded successfully.");
+    }
+
+    private void seedGradesOnly() {
+        Optional<User> student1Opt = userRepository.findByEmail("student1@school.com");
+        Optional<User> student2Opt = userRepository.findByEmail("student2@school.com");
+        Optional<User> student3Opt = userRepository.findByEmail("student3@school.com");
+
+        Optional<Subject> dsaOpt = subjectRepository.findByCourseCode("CS-101");
+        Optional<Subject> webOpt = subjectRepository.findByCourseCode("CS-102");
+        Optional<Subject> dbmsOpt = subjectRepository.findByCourseCode("CS-103");
+
+        if (dsaOpt.isEmpty() || webOpt.isEmpty() || dbmsOpt.isEmpty()) return;
+
+        Subject dsa = dsaOpt.get();
+        Subject web = webOpt.get();
+        Subject dbms = dbmsOpt.get();
+
+        student1Opt.ifPresent(s -> {
+            gradeRepository.save(new Grade(s, dsa, 85, 100, "Midterm Exam", "Excellent theoretical knowledge. Good job."));
+            gradeRepository.save(new Grade(s, web, 92, 100, "Midterm Exam", "Superb styling and visual design. Keep it up!"));
+        });
+        student2Opt.ifPresent(s -> {
+            gradeRepository.save(new Grade(s, dsa, 74, 100, "Midterm Exam", "Satisfactory. Needs to spend more time on complex data structures."));
+            gradeRepository.save(new Grade(s, web, 88, 100, "Midterm Exam", "Very good presentation. Try to implement more responsive components."));
+        });
+        student3Opt.ifPresent(s -> {
+            gradeRepository.save(new Grade(s, dsa, 68, 100, "Midterm Exam", "Needs improvement. Focus on algorithmic complexities."));
+            gradeRepository.save(new Grade(s, dbms, 95, 100, "Midterm Exam", "Outstanding query optimization skills. Exemplary work."));
+        });
+
+        System.out.println("Grades seeded successfully.");
     }
 }

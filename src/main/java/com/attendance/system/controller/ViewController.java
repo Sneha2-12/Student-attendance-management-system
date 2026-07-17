@@ -212,7 +212,7 @@ public class ViewController {
                 model.addAttribute("timetable", timetableRepository.findByClassSection("CS-A"));
             }
         } else if (user.getRole() == Role.ROLE_TEACHER) {
-            model.addAttribute("timetable", timetableRepository.findBySubjectTeacher(user));
+            model.addAttribute("timetable", timetableRepository.findByTeacherOrSubjectTeacher(user, user));
         } else {
             // Admin: view all
             model.addAttribute("timetable", timetableRepository.findAll());
@@ -269,6 +269,9 @@ public class ViewController {
         List<Subject> subjects;
         if (user.getRole() == Role.ROLE_TEACHER) {
             subjects = subjectRepository.findByTeacher(user);
+            if (subjects.isEmpty()) {
+                subjects = subjectRepository.findAll();
+            }
         } else {
             subjects = subjectRepository.findAll();
         }

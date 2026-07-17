@@ -13,4 +13,8 @@ public interface TimetableRepository extends JpaRepository<TimetableEntry, Long>
     List<TimetableEntry> findByClassSection(String classSection);
 
     List<TimetableEntry> findBySubjectTeacher(User teacher);
+
+    List<TimetableEntry> findByTeacher(User teacher);
+
+    List<TimetableEntry> findByTeacherOrSubjectTeacher(User teacher, User subjectTeacher);
 }
