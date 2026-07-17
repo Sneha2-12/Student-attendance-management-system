@@ -402,13 +402,16 @@
 
             try {
                 const response = await fetch(`/api/attendance/subject/${subjectId}/students`);
-                if (!response.ok) throw new Error('Failed to fetch students');
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Server error');
+                }
                 
                 allStudentsList = await response.json();
                 updateAttendanceTable();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to load students');
+                alert('Failed to load students: ' + error.message);
             }
         });
 

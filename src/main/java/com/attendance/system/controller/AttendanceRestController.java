@@ -99,7 +99,7 @@ public class AttendanceRestController {
             List<StudentSubjectInfo> studentInfoList = enrollments.stream()
                     .map(enrollment -> {
                         User student = enrollment.getStudent();
-                        com.attendance.system.model.StudentProfile profile = userService.getStudentProfile(student).orElse(null);
+                        com.attendance.system.model.StudentProfile profile = userService.getStudentProfileByEmail(student.getEmail()).orElse(null);
                         
                         // Check if student has any active leave requests
                         java.util.List<com.attendance.system.model.LeaveRequest> studentLeaves = leaveService.getStudentLeaves(student);
@@ -117,12 +117,17 @@ public class AttendanceRestController {
                                 activeLeaves.isEmpty() ? null : activeLeaves.get(0).getLeaveType().toString()
                         );
                     })
-                    .sorted((a, b) -> a.getRollNumber().compareTo(b.getRollNumber()))
+                    .sorted((a, b) -> {
+                        String r1 = a.getRollNumber() != null ? a.getRollNumber() : "";
+                        String r2 = b.getRollNumber() != null ? b.getRollNumber() : "";
+                        return r1.compareTo(r2);
+                    })
                     .toList();
             
             return ResponseEntity.ok(studentInfoList);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unknown error"));
         }
     }
 
