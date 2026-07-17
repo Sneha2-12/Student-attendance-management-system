@@ -21,8 +21,10 @@ import com.attendance.system.repository.AttendanceRepository;
 import com.attendance.system.repository.EnrollmentRepository;
 import com.attendance.system.repository.ExamRepository;
 import com.attendance.system.repository.SubjectRepository;
+import com.attendance.system.repository.TimetableRepository;
 import com.attendance.system.repository.UserRepository;
 import com.attendance.system.service.UserService;
+import com.attendance.system.model.TimetableEntry;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
@@ -44,6 +46,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
     private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private TimetableRepository timetableRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -155,6 +160,36 @@ public class DatabaseSeeder implements CommandLineRunner {
                 }
             }
         }
+
+        // 7. Create Timetable Entries
+        // Section CS-A (DSA, Web Development, DBMS)
+        timetableRepository.save(new TimetableEntry(dsa, "MONDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(web, "MONDAY", "10:15 - 11:15", "CS-A", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(web, "TUESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, "TUESDAY", "11:30 - 12:30", "CS-A", "Room 302"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, "WEDNESDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, "WEDNESDAY", "10:15 - 11:15", "CS-A", "Room 302"));
+        
+        timetableRepository.save(new TimetableEntry(web, "THURSDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, "FRIDAY", "09:00 - 10:00", "CS-A", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, "FRIDAY", "11:30 - 12:30", "CS-A", "Room 302"));
+
+        // Section CS-B (DBMS, DSA)
+        timetableRepository.save(new TimetableEntry(dbms, "MONDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, "MONDAY", "10:15 - 11:15", "CS-B", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, "TUESDAY", "09:00 - 10:00", "CS-B", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dbms, "WEDNESDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        timetableRepository.save(new TimetableEntry(dsa, "WEDNESDAY", "11:30 - 12:30", "CS-B", "Room 301"));
+        
+        timetableRepository.save(new TimetableEntry(dbms, "THURSDAY", "09:00 - 10:00", "CS-B", "Room 302"));
+        
+        timetableRepository.save(new TimetableEntry(dsa, "FRIDAY", "10:15 - 11:15", "CS-B", "Room 301"));
+        timetableRepository.save(new TimetableEntry(dbms, "FRIDAY", "11:30 - 12:30", "CS-B", "Room 302"));
 
         System.out.println("Database seeding completed successfully.");
     }

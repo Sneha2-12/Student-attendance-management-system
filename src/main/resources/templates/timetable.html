@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Timetable - Academics Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Timetable Specific Styles */
+        .timetable-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+            align-items: start;
+        }
+
+        .day-column {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            min-height: 400px;
+        }
+
+        .day-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .slots-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .slot-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--primary);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            transition: var(--transition);
+        }
+
+        .slot-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+
+        .slot-time {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .slot-subject {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .slot-code {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 600;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .slot-meta {
+            font-size: 11px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .slot-meta i {
+            color: #94a3b8;
+            width: 14px;
+        }
+
+        .no-classes {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+            padding: 20px 0;
+            font-style: italic;
+        }
+
+        /* Filter Controls */
+        .timetable-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .timetable-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .day-column {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body th:data-user-role="${role}">
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Academics</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="/timetable">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Class Timetable</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calendar">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Exam Calendar</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info-card">
+                    <div class="avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="user-meta">
+                        <h4 th:text="${user.name}">User Name</h4>
+                        <span th:text="${role.substring(5)}">Role</span>
+                    </div>
+                </div>
+                <button onclick="logout()" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i> Sign Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="timetable-header-row">
+                <div class="page-title">
+                    <h1>Weekly Class Timetable</h1>
+                    <p th:if="${role == 'ROLE_STUDENT'}" th:text="'Section: ' + ${sectionName} + ' | Class Schedule'"></p>
+                    <p th:if="${role == 'ROLE_TEACHER'}">Your teaching schedule across departments</p>
+                    <p th:if="${role == 'ROLE_ADMIN'}">Full master schedule grouped by day</p>
+                </div>
+            </div>
+
+            <!-- Timetable Columns Grid -->
+            <div class="timetable-container">
+                <!-- MONDAY -->
+                <div class="day-column">
+                    <div class="day-header">Monday</div>
+                    <div class="slots-container">
+                        <div th:each="slot : ${timetable}" th:if="${slot.dayOfWeek == 'MONDAY'}" class="slot-card">
+                            <div class="slot-time"><i class="fa-regular fa-clock"></i> <span th:text="${slot.timeSlot}">09:00 - 10:00</span></div>
+                            <div class="slot-subject" th:text="${slot.subject.name}">DSA</div>
+                            <div class="slot-code" th:text="${slot.subject.courseCode}">CS-101</div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_STUDENT' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                <span th:text="${slot.subject.teacher.name}">Teacher Name</span>
+                            </div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_TEACHER' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-users"></i>
+                                <span th:text="'Class: ' + ${slot.classSection}">CS-A</span>
+                            </div>
+                            <div class="slot-meta">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span th:text="${slot.roomNumber}">Room 301</span>
+                            </div>
+                        </div>
+                        <div class="no-classes" th:if="${#lists.isEmpty(timetable.?[dayOfWeek == 'MONDAY'])}">No classes scheduled</div>
+                    </div>
+                </div>
+
+                <!-- TUESDAY -->
+                <div class="day-column">
+                    <div class="day-header">Tuesday</div>
+                    <div class="slots-container">
+                        <div th:each="slot : ${timetable}" th:if="${slot.dayOfWeek == 'TUESDAY'}" class="slot-card">
+                            <div class="slot-time"><i class="fa-regular fa-clock"></i> <span th:text="${slot.timeSlot}">09:00 - 10:00</span></div>
+                            <div class="slot-subject" th:text="${slot.subject.name}">DSA</div>
+                            <div class="slot-code" th:text="${slot.subject.courseCode}">CS-101</div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_STUDENT' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                <span th:text="${slot.subject.teacher.name}">Teacher Name</span>
+                            </div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_TEACHER' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-users"></i>
+                                <span th:text="'Class: ' + ${slot.classSection}">CS-A</span>
+                            </div>
+                            <div class="slot-meta">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span th:text="${slot.roomNumber}">Room 301</span>
+                            </div>
+                        </div>
+                        <div class="no-classes" th:if="${#lists.isEmpty(timetable.?[dayOfWeek == 'TUESDAY'])}">No classes scheduled</div>
+                    </div>
+                </div>
+
+                <!-- WEDNESDAY -->
+                <div class="day-column">
+                    <div class="day-header">Wednesday</div>
+                    <div class="slots-container">
+                        <div th:each="slot : ${timetable}" th:if="${slot.dayOfWeek == 'WEDNESDAY'}" class="slot-card">
+                            <div class="slot-time"><i class="fa-regular fa-clock"></i> <span th:text="${slot.timeSlot}">09:00 - 10:00</span></div>
+                            <div class="slot-subject" th:text="${slot.subject.name}">DSA</div>
+                            <div class="slot-code" th:text="${slot.subject.courseCode}">CS-101</div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_STUDENT' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                <span th:text="${slot.subject.teacher.name}">Teacher Name</span>
+                            </div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_TEACHER' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-users"></i>
+                                <span th:text="'Class: ' + ${slot.classSection}">CS-A</span>
+                            </div>
+                            <div class="slot-meta">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span th:text="${slot.roomNumber}">Room 301</span>
+                            </div>
+                        </div>
+                        <div class="no-classes" th:if="${#lists.isEmpty(timetable.?[dayOfWeek == 'WEDNESDAY'])}">No classes scheduled</div>
+                    </div>
+                </div>
+
+                <!-- THURSDAY -->
+                <div class="day-column">
+                    <div class="day-header">Thursday</div>
+                    <div class="slots-container">
+                        <div th:each="slot : ${timetable}" th:if="${slot.dayOfWeek == 'THURSDAY'}" class="slot-card">
+                            <div class="slot-time"><i class="fa-regular fa-clock"></i> <span th:text="${slot.timeSlot}">09:00 - 10:00</span></div>
+                            <div class="slot-subject" th:text="${slot.subject.name}">DSA</div>
+                            <div class="slot-code" th:text="${slot.subject.courseCode}">CS-101</div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_STUDENT' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                <span th:text="${slot.subject.teacher.name}">Teacher Name</span>
+                            </div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_TEACHER' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-users"></i>
+                                <span th:text="'Class: ' + ${slot.classSection}">CS-A</span>
+                            </div>
+                            <div class="slot-meta">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span th:text="${slot.roomNumber}">Room 301</span>
+                            </div>
+                        </div>
+                        <div class="no-classes" th:if="${#lists.isEmpty(timetable.?[dayOfWeek == 'THURSDAY'])}">No classes scheduled</div>
+                    </div>
+                </div>
+
+                <!-- FRIDAY -->
+                <div class="day-column">
+                    <div class="day-header">Friday</div>
+                    <div class="slots-container">
+                        <div th:each="slot : ${timetable}" th:if="${slot.dayOfWeek == 'FRIDAY'}" class="slot-card">
+                            <div class="slot-time"><i class="fa-regular fa-clock"></i> <span th:text="${slot.timeSlot}">09:00 - 10:00</span></div>
+                            <div class="slot-subject" th:text="${slot.subject.name}">DSA</div>
+                            <div class="slot-code" th:text="${slot.subject.courseCode}">CS-101</div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_STUDENT' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                <span th:text="${slot.subject.teacher.name}">Teacher Name</span>
+                            </div>
+                            <div class="slot-meta" th:if="${role == 'ROLE_TEACHER' or role == 'ROLE_ADMIN'}">
+                                <i class="fa-solid fa-users"></i>
+                                <span th:text="'Class: ' + ${slot.classSection}">CS-A</span>
+                            </div>
+                            <div class="slot-meta">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span th:text="${slot.roomNumber}">Room 301</span>
+                            </div>
+                        </div>
+                        <div class="no-classes" th:if="${#lists.isEmpty(timetable.?[dayOfWeek == 'FRIDAY'])}">No classes scheduled</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

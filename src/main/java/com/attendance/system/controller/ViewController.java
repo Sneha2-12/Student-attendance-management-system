@@ -6,6 +6,7 @@ import com.attendance.system.service.ExamService;
 import com.attendance.system.service.LeaveService;
 import com.attendance.system.service.UserService;
 import com.attendance.system.repository.SubjectRepository;
+import com.attendance.system.repository.TimetableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +35,9 @@ public class ViewController {
 
     @Autowired
     private SubjectRepository subjectRepository;
+
+    @Autowired
+    private TimetableRepository timetableRepository;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -162,5 +166,33 @@ public class ViewController {
         model.addAttribute("role", user.getRole().name());
         model.addAttribute("subjects", subjectRepository.findAll());
         return "calendar";
+    }
+
+    @GetMapping("/timetable")
+    public String timetable(Model model) {
+        User user = getCurrentUser();
+        if (user == null) return "redirect:/login";
+
+        model.addAttribute("user", user);
+        model.addAttribute("role", user.getRole().name());
+
+        if (user.getRole() == Role.ROLE_STUDENT) {
+            Optional<StudentProfile> profile = userService.getStudentProfile(user);
+            if (profile.isPresent()) {
+                String section = profile.get().getClassSection();
+                model.addAttribute("timetable", timetableRepository.findByClassSection(section));
+                model.addAttribute("sectionName", section);
+            } else {
+                model.addAttribute("sectionName", "CS-A");
+                model.addAttribute("timetable", timetableRepository.findByClassSection("CS-A"));
+            }
+        } else if (user.getRole() == Role.ROLE_TEACHER) {
+            model.addAttribute("timetable", timetableRepository.findBySubjectTeacher(user));
+        } else {
+            // Admin: view all
+            model.addAttribute("timetable", timetableRepository.findAll());
+        }
+
+        return "timetable";
     }
 }
